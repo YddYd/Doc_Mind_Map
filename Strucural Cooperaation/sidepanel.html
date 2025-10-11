@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>StructDoc — Side Panel</title>
+    <style>
+      html,body{height:100%;margin:0}
+      header{display:flex;gap:8px;align-items:center;padding:8px;border-bottom:1px solid #eee;font:13px system-ui,sans-serif}
+      button{padding:6px 10px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer}
+      #status{color:#666}
+      #graph{height:calc(100% - 46px);overflow:auto;position:relative;background:#fafafa}
+      .node{position:absolute;padding:6px 8px;border:1px solid #bbb;border-radius:6px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05);max-width:220px}
+      .link{position:absolute;background:#999;pointer-events:none}
+      .small{color:#777;font-size:12px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      input[type=text]{width:260px;padding:6px 8px;border:1px solid #ddd;border-radius:8px}
+    </style>
+    <!-- 无需引入外部脚本即可使用 Writer API；API 位于 window（self）上，需通过 Origin Trial 或 flags 启用。-->
+  </head>
+  <body>
+    <header>
+      <button id="btn-auth">授权</button>
+      <input id="docIdInput" type="text" placeholder="docId 或 Docs URL" />
+      <button id="btn-outline">AI 结构化</button>
+      <button id="btn-export">导出到新分页</button>
+      <span id="status">就绪</span>
+    </header>
+    <div id="graph"></div>
+
+    <script src="auth.js"></script>
+    <script src="sidepanel.js"></script>
+  </body>
+</html>
