@@ -1,32 +1,210 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>StructDoc — Side Panel</title>
-    <style>
-      html,body{height:100%;margin:0}
-      header{display:flex;gap:8px;align-items:center;padding:8px;border-bottom:1px solid #eee;font:13px system-ui,sans-serif}
-      button{padding:6px 10px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer}
-      #status{color:#666}
-      #graph{height:calc(100% - 46px);overflow:auto;position:relative;background:#fafafa}
-      .node{position:absolute;padding:6px 8px;border:1px solid #bbb;border-radius:6px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.05);max-width:220px}
-      .link{position:absolute;background:#999;pointer-events:none}
-      .small{color:#777;font-size:12px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      input[type=text]{width:260px;padding:6px 8px;border:1px solid #ddd;border-radius:8px}
-    </style>
-    <!-- 无需引入外部脚本即可使用 Writer API；API 位于 window（self）上，需通过 Origin Trial 或 flags 启用。-->
-  </head>
-  <body>
-    <header>
-      <button id="btn-auth">授权</button>
-      <input id="docIdInput" type="text" placeholder="docId 或 Docs URL" />
-      <button id="btn-outline">AI 结构化</button>
-      <button id="btn-export">导出到新分页</button>
-      <span id="status">就绪</span>
-    </header>
-    <div id="graph"></div>
 
-    <script src="auth.js"></script>
-    <script src="sidepanel.js"></script>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <title>StructDoc — Side Panel</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    header {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      font: 13px system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    button {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #f6f6f6;
+    }
+
+    input[type=text] {
+      width: 260px;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    #status {
+      color: #666;
+      margin-left: auto;
+    }
+
+    /* 主体区域从 header 下到 chat 面板上方 */
+    #main {
+      position: relative;
+      height: calc(100% - 46px - 170px);
+    }
+
+    #graph {
+      position: absolute;
+      inset: 0;
+      overflow: auto;
+      background: #fafafa;
+    }
+
+    .node {
+      position: absolute;
+      padding: 6px 8px;
+      border: 1px solid #bbb;
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      width: 220px;
+      min-height: 64px;
+    }
+
+    .node strong {
+      font-weight: 600;
+    }
+
+    .node.sel {
+      border-color: #2b7fff;
+      box-shadow: 0 0 0 2px rgba(43, 127, 255, 0.15);
+    }
+
+    .small {
+      color: #777;
+      font-size: 12px;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .link {
+      position: absolute;
+      background: #999;
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 2px 6px;
+      border: 1px dashed #aaa;
+      border-radius: 999px;
+      font-size: 12px;
+      color: #555;
+      background: #fff;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .badge:hover {
+      background: #f0f0f0;
+    }
+
+    /* 聊天区：固定在底部，含输出和输入 */
+    #chat {
+      height: 170px;
+      border-top: 1px solid #eee;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #chatOut {
+      flex: 1;
+      overflow: auto;
+      padding: 8px;
+      background: #fff;
+    }
+
+    .msg {
+      margin: 6px 0;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .msg.user {
+      color: #333;
+    }
+
+    .msg.ai {
+      color: #0a4;
+    }
+
+    .msg small {
+      color: #999;
+      margin-left: 6px;
+    }
+
+    #chatDock {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      padding: 8px;
+      border-top: 1px solid #f2f2f2;
+      background: #fafafa;
+    }
+
+    #selInfo {
+      font-size: 12px;
+      color: #666;
+      min-width: 160px;
+    }
+
+    #chatInput {
+      flex: 1;
+      min-height: 44px;
+      max-height: 88px;
+      resize: vertical;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font: 13px system-ui, sans-serif;
+    }
+
+    .rowbtn {
+      display: flex;
+      gap: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <button id="btn-auth">授权</button>
+    <input id="docIdInput" type="text" placeholder="docId 或 Docs URL" />
+    <button id="btn-outline">AI 结构化</button>
+    <button id="btn-export">导出到新分页</button>
+    <button id="btn-root" title="回到根层">◎ 根</button>
+    <span id="status">就绪</span>
+  </header>
+
+  <div id="main">
+    <div id="graph"></div>
+  </div>
+
+  <!-- 底部对话框 -->
+  <div id="chat">
+    <div id="chatOut"></div>
+    <div id="chatDock">
+      <div id="selInfo">未选择节点（Ctrl/⌘ + 单击可多选）</div>
+      <textarea id="chatInput" placeholder="问点什么…（Enter 发送，Shift+Enter 换行）"></textarea>
+      <div class="rowbtn">
+        <button id="chatSend">发送</button>
+        <button id="chatClear">清空</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+
 </html>

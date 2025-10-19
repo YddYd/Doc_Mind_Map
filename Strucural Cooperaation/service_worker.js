@@ -1,4 +1,4 @@
-// service_worker.js
+// 打开 Side Panel
 chrome.runtime.onInstalled.addListener(() => {
   chrome.sidePanel.setOptions({ path: "sidepanel.html", enabled: true });
 });
