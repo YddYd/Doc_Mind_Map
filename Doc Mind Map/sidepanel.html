@@ -1,0 +1,398 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>StructDoc — Google Docs Outliner</title>
+  <style>
+    :root {
+      --g-surface: #fff;
+      --g-surface-2: #f8f9fa;
+      --g-hover: #f1f3f4;
+      --g-border: #dadce0;
+      --g-border-strong: #bdc1c6;
+      --g-text: #202124;
+      --g-text-secondary: #5f6368;
+      --g-primary: #1a73e8;
+      --g-primary-bg: #e8f0fe;
+      --tree-stroke: #c6c9cc;
+      --radius: 12px;
+      --shadow: 0 1px 2px rgba(60, 64, 67, .3), 0 1px 3px 1px rgba(60, 64, 67, .15);
+      --font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+      --toolbar-h: 46px;
+      --chat-h: 176px;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      background: var(--g-surface);
+      color: var(--g-text);
+      font: var(--font);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    /* ===== Top toolbar (responsive) ===== */
+    header.toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      height: var(--toolbar-h);
+      background: var(--g-surface-2);
+      border-bottom: 1px solid var(--g-border);
+    }
+
+    .btn {
+      height: 30px;
+      padding: 0 12px;
+      border: 1px solid var(--g-border);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--g-text);
+      cursor: pointer;
+      transition: background .12s, border-color .12s, box-shadow .12s;
+    }
+
+    .btn:hover {
+      background: var(--g-hover);
+      border-color: var(--g-border-strong);
+    }
+
+    .btn.primary {
+      border-color: transparent;
+      background: var(--g-primary);
+      color: #fff;
+    }
+
+    .btn.primary:hover {
+      filter: brightness(.98);
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      border: 1px solid var(--g-border);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--g-text-secondary);
+      font-size: 12px;
+    }
+
+    .chip input {
+      accent-color: var(--g-primary);
+    }
+
+    #status {
+      margin-left: auto;
+      color: var(--g-text-secondary);
+      white-space: nowrap;
+    }
+
+    /* ===== Connect dropdown ===== */
+    .connect-panel {
+      position: absolute;
+      top: var(--toolbar-h);
+      left: 10px;
+      z-index: 25;
+      display: none;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid var(--g-border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .connect-panel.show {
+      display: flex;
+    }
+
+    .connect-panel input[type="text"] {
+      width: 320px;
+      height: 30px;
+      padding: 0 10px;
+      border: 1px solid var(--g-border);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--g-text);
+    }
+
+    /* ===== Layout: center graph auto-fit, full width ===== */
+    #main {
+      position: relative;
+      height: calc(100% - var(--toolbar-h) - var(--chat-h));
+    }
+
+    #graph {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: var(--g-surface);
+      /* 允许平移时改变光标 */
+      cursor: default;
+    }
+
+    #graph.dragging {
+      cursor: grabbing;
+    }
+
+    /* Canvas inside graph (we translate this for panning) */
+    #canvas {
+      position: absolute;
+      left: 0;
+      top: 0;
+      will-change: transform;
+    }
+
+    /* Nodes & links */
+    .node {
+      position: absolute;
+      width: 260px;
+      min-height: 72px;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid var(--g-border);
+      border-radius: var(--radius);
+      box-shadow: none;
+      transition: box-shadow .12s, border-color .12s;
+    }
+
+    .node:hover {
+      box-shadow: var(--shadow);
+      border-color: var(--g-border-strong);
+    }
+
+    .node.sel {
+      border-color: var(--g-primary);
+      box-shadow: 0 0 0 3px var(--g-primary-bg), var(--shadow);
+    }
+
+    .node .title {
+      font-weight: 500;
+      color: var(--g-text);
+      margin-bottom: 4px;
+    }
+
+    .node .snippet {
+      color: var(--g-text-secondary);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* floating Root button & hint */
+    .float-root {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 10;
+    }
+
+    .graph-hint {
+      position: absolute;
+      left: 12px;
+      bottom: 10px;
+      z-index: 10;
+      padding: 4px 8px;
+      border: 1px solid var(--g-border);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--g-text-secondary);
+      font-size: 12px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .06);
+    }
+
+    /* Chat (responsive) */
+    #chat {
+      height: var(--chat-h);
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid var(--g-border);
+      background: var(--g-surface-2);
+    }
+
+    #chatOut {
+      flex: 1;
+      overflow: auto;
+      padding: 8px 10px;
+      background: #fff;
+      border-top: 1px solid var(--g-border);
+    }
+
+    .msg {
+      margin: 6px 0;
+    }
+
+    .msg strong {
+      color: var(--g-text);
+    }
+
+    .msg.ai {
+      color: #14532d;
+    }
+
+    #chatDock {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      padding: 8px 10px;
+    }
+
+    #chatInput {
+      flex: 1;
+      min-height: 44px;
+      max-height: 88px;
+      resize: vertical;
+      padding: 8px 10px;
+      border: 1px solid var(--g-border);
+      border-radius: 12px;
+      background: #fff;
+      font: var(--font);
+    }
+
+    .rowbtn {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Popout on the right of focused leaf */
+    .popout {
+      position: absolute;
+      width: 360px;
+      max-height: 260px;
+      overflow: auto;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid var(--g-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .popout h4 {
+      margin: 0 0 6px 0;
+      font-weight: 500;
+      color: var(--g-text);
+      font-size: 13px;
+    }
+
+    .popout ul {
+      margin: 6px 0 0 16px;
+      padding: 0;
+      list-style: disc;
+      color: var(--g-text-secondary);
+      font-size: 12px;
+    }
+
+    .popout li {
+      margin: 2px 0;
+    }
+
+    /* Dark mode */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --g-surface: #1f1f1f;
+        --g-surface-2: #2a2a2a;
+        --g-hover: #303134;
+        --g-border: #3c4043;
+        --g-border-strong: #5f6368;
+        --g-text: #e8eaed;
+        --g-text-secondary: #bdc1c6;
+        --g-primary: #8ab4f8;
+        --g-primary-bg: #203b72;
+        --tree-stroke: #5f6368;
+      }
+
+      #chatOut {
+        background: #1f1f1f;
+      }
+    }
+
+    header.toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      /* 允许换行 */
+      align-items: center;
+      gap: 8px 10px;
+      /* 行/列间距 */
+      padding: 8px;
+      height: auto;
+      /* 去掉任何固定高度 */
+    }
+
+    header.toolbar .btn,
+    header.toolbar button {
+      margin: 2px 0;
+    }
+
+    header.toolbar label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    header.toolbar .right {
+      margin-left: auto;
+    }
+
+    /* 可选：把状态文本右对齐 */
+  </style>
+</head>
+
+<body>
+  <header class="toolbar">
+    <button id="btn-auth" class="btn">Authorize</button>
+    <!-- docId input is hidden from toolbar; appears in the connect panel -->
+    <button id="btn-outline" class="btn primary">AI Outline</button>
+    <button id="btn-export" class="btn">Export Outline</button>
+    <button id="btn-clearhl" class="btn">Clear Highlight</button>
+    <label class="sd-toggle chip"><input id="sdAutoMap" type="checkbox" checked> Auto-map after build</label>
+    <label class="sd-toggle chip"><input id="sdAutoHL" type="checkbox" checked> Highlight on selection</label>
+    <label class="chip" title="Auto summarize after 1s when selection changes">
+      <input id="cb-sum" type="checkbox" checked /> Auto Summarize
+    </label>
+    <span id="status">Ready</span>
+
+    <!-- dropdown connect panel -->
+    <div id="connectPanel" class="connect-panel">
+      <input id="docIdInput" type="text" placeholder="docId or Docs URL" />
+      <button id="btn-connect" class="btn">Connect</button>
+    </div>
+  </header>
+
+  <div id="main">
+    <div id="graph">
+      <button id="btn-root-float" class="btn float-root" title="Back to root">Root</button>
+      <div id="graphHint" class="graph-hint">Click: select · Ctrl/⌘+Click: multi-select · Double-click: focus</div>
+      <div id="canvas"></div>
+    </div>
+  </div>
+
+  <div id="chat">
+    <div id="chatOut"></div>
+    <div id="chatDock">
+      <textarea id="chatInput" placeholder="Ask anything… (Enter to send, Shift+Enter for newline)"></textarea>
+      <div class="rowbtn">
+        <button id="chatSend" class="btn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="highlighter.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "StructDoc — Google Docs Outliner",
+  "version": "0.6.0",
+  "description": "Re-outline any Google Doc with Chrome Built-in AI Writer and visualize as a focusable tree; Summarize Article; Cooperative workspace; optional export to a new page.",
+  "permissions": [
+    "tabs",
+    "sidePanel",
+    "identity",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://docs.google.com/*",
+    "https://docs.googleapis.com/*",
+    "https://www.googleapis.com/*"
+  ],
+  "background": {
+    "service_worker": "service_worker.js"
+  },
+  "action": {
+    "default_title": "StructDoc"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "trial_tokens": [
+    "A9XuMydaSayAYn31mYqFdBayr+vtPn/njDLsbnstLvbE7lb6ZLlMFEmW4QSgrgu24nrRpejniI82mqLFPBFvcQ4AAACAeyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZmtsbWlnYWFkZWpmZW5qcGdiYWtoa25ra21sZ2ZubG4iLCJmZWF0dXJlIjoiQUlXcml0ZXJBUEkiLCJleHBpcnkiOjE3Njk0NzIwMDAsImlzVGhpcmRQYXJ0eSI6dHJ1ZX0="
+  ],
+  "oauth2": {
+    "client_id": "899807374293-4kh94bijc2jctsq90sdqj2nk9o92o2kh.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/documents",
+      "https://www.googleapis.com/auth/drive.readonly"
+    ]
+  }
+}
