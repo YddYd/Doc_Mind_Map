@@ -1,4 +1,4 @@
-// 新：统一使用 DocsHighlighter
+// New: unify via DocsHighlighter
 const highlighter = new DocsHighlighter({ getAccessToken: () => accessToken });
 
 window.refreshHighlights = () => SD_refreshHighlightsForSelection();
@@ -47,7 +47,7 @@ SD_installSelectionHooks();
 
 /* ===== Pointer-based Pan & Zoom core (stable) ===== */
 (() => {
-  if (window._pz) return; // 防重复注入
+  if (window._pz) return; // guard against double attach
 
   window._pz = {
     panX: 0, panY: 0, scale: 1,
@@ -64,7 +64,7 @@ SD_installSelectionHooks();
       this.graphEl = graphEl; this.canvasEl = canvasEl;
       if (!graphEl || !canvasEl) return;
 
-      // pointerdown：任意处按下，准备拖拽
+      // pointerdown: prepare drag on any press
       graphEl.addEventListener("pointerdown", (e) => {
         if (e.button !== 0) return;
         this.active = true; this.isDragging = false; this.suppressClick = false;
@@ -75,7 +75,7 @@ SD_installSelectionHooks();
         graphEl.classList.add("dragging");
       });
 
-      // pointermove：超过阈值就进入拖拽
+      // pointermove: enter dragging after threshold
       graphEl.addEventListener("pointermove", (e) => {
         if (!this.active || e.pointerId !== this.pointerId) return;
         const dx = e.clientX - this.startX;
@@ -93,7 +93,7 @@ SD_installSelectionHooks();
         }
       });
 
-      // pointerup/cancel：结束拖拽；一帧内屏蔽 click/dblclick
+      // pointerup/cancel: end dragging; suppress click/dblclick for one frame
       const endDrag = () => {
         if (!this.active) return;
         this.active = false;
@@ -105,20 +105,20 @@ SD_installSelectionHooks();
       graphEl.addEventListener("pointerup", endDrag);
       graphEl.addEventListener("pointercancel", endDrag);
 
-      // Ctrl/⌘ + 滚轮缩放（以鼠标为锚点）
+      // Ctrl/⌘ + wheel zoom (anchor at cursor)
       graphEl.addEventListener("wheel", (e) => {
-        if (!(e.ctrlKey || e.metaKey)) return; // 避免抢普通滚动
+        if (!(e.ctrlKey || e.metaKey)) return; // Translated comment omitted (English only).
         e.preventDefault();
         const rect = graphEl.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
-        // 当前内容坐标
+        // Translated comment omitted (English only).
         const cx = (mx - this.panX) / this.scale;
         const cy = (my - this.panY) / this.scale;
-        // 指数缩放手感
+        // Translated comment omitted (English only).
         const factor = Math.exp(-e.deltaY * 0.0015);
         const newScale = Math.min(this.SCALE_MAX, Math.max(this.SCALE_MIN, this.scale * factor));
-        // 锚定 (cx,cy) 到屏幕 (mx,my)
+        // Translated comment omitted (English only).
         this.panX = mx - cx * newScale;
         this.panY = my - cy * newScale;
         this.scale = newScale;
@@ -128,15 +128,15 @@ SD_installSelectionHooks();
   };
 })();
 
-// === 获取并暴露 DOM 引用 ===
+// Translated comment omitted (English only).
 window.graphEl = document.getElementById("graph");
 window.canvasEl = document.getElementById("canvas");
 
-// 让整个图区域都能接管手势，但不去屏蔽按钮（按钮在 header/底部区，不在 #graph 里）
+// Let the graph capture gestures without blocking toolbar buttons (toolbar is not inside #graph)
 if (window.graphEl) window.graphEl.style.pointerEvents = "auto";
 if (window.canvasEl) window.canvasEl.style.pointerEvents = "auto";
 
-// 手势：在 graph 上监听，在 canvas 上渲染（推荐）
+// Gestures: listen on graph, render on canvas (recommended)
 window._pz?.attach(window.graphEl, window.canvasEl);
 
 console.log("[BOOT]", { graphOk: !!window.graphEl, canvasOk: !!window.canvasEl });
@@ -152,15 +152,11 @@ const H1_BLACKLIST = /^(?:文章结构化助手|写作助手|AI\s*重排大纲|�
 
 let globalRootTitle = null;
 
-let lastHighlighted = [];
-
 let chatWriter = null;
-
-let _writer;
 
 let AUTO_MAP_AFTER_BUILD = true;
 
-// 开关（默认都开）
+// Toggles (enabled by default)
 let SD_AUTO_MAP_AFTER_BUILD = true;
 let SD_HIGHLIGHT_ON_SELECTION = true;
 
@@ -179,12 +175,12 @@ let summarizer = null, sumEnabled = !!cbSum?.checked, sumDebounceTimer = null, s
 cbSum?.addEventListener("change", () => { sumEnabled = !!cbSum.checked; });
 
 
-// ① 事件：用户切换时更新标志（并在开启时预检可用性）
+// ① On change: update flag (and pre-check availability when enabled)
 cbSum?.addEventListener("change", async (e) => {
   sumEnabled = !!e.target.checked;
   if (sumEnabled) {
-    // 不强制立刻创建模型，等首次选中节点时由 runSummarize 调用 ensureSummarizer()
-    // 这里仅做一次可用性预检，避免首次点选再报错
+    // Translated comment omitted (English only).
+    // Translated comment omitted (English only).
     try { if ('Summarizer' in self) await Summarizer.availability(); } catch { }
   }
 });
@@ -194,7 +190,7 @@ async function init() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     const m = tab?.url?.match(/docs\.google\.com\/document\/d\/([^/]+)/);
-    if (m) docInput.value = m[1]; // 预填到隐藏输入里，等待 Connect
+    if (m) docInput.value = m[1]; // Translated comment omitted (English only).
   } catch { }
   setStatus("Ready");
 }
@@ -208,7 +204,7 @@ if (elAutoHL) {
   elAutoHL.checked = SD_HIGHLIGHT_ON_SELECTION;
   elAutoHL.onchange = () => {
     SD_HIGHLIGHT_ON_SELECTION = elAutoHL.checked;
-    // 切回开启时，立刻按当前选区刷一次
+    // Translated comment omitted (English only).
     if (SD_HIGHLIGHT_ON_SELECTION) SD_refreshHighlightsForSelection().catch(() => { });
   };
 }
@@ -216,10 +212,10 @@ if (elAutoHL) {
 
 /* ===================== Block A — SD Helpers (safe to paste) ===================== */
 
-// —— 高亮颜色可自调
+// -- highlight color configurable
 const SD_HL_COLOR = { r: 1, g: 1, b: 0.6 };
 
-// 去抖：避免连点触发太多次
+// Debounce to avoid rapid repeated triggers
 function SD_debounce(fn, ms = 80) {
   let t = null;
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
@@ -232,7 +228,7 @@ async function SD_refreshHighlightsForSelection() {
   const ids = Array.from(window.selectedIds || new Set());
   if (!ids.length) { await SD_clearHighlights({ onlySelection: false }).catch(() => { }); return; }
 
-  // ↓↓ 这里改成 flatMap：父节点可能是“多段”
+  // ↓↓ Use flatMap: parent nodes may map to multiple ranges
   const flatten = v => (Array.isArray(v) ? v : (v ? [v] : []));
   const ranges = ids
     .flatMap(id => flatten(window.aiToOrigMap?.get(String(id))))
@@ -240,10 +236,10 @@ async function SD_refreshHighlightsForSelection() {
     .sort((a, b) => a.start - b.start)
     .reduce((acc, r) => { const L = acc[acc.length - 1]; if (!L || r.start > L.end) acc.push({ ...r }); else L.end = Math.max(L.end, r.end); return acc; }, []);
 
-  await SD_applyHighlights(docId, ranges, { color: { r: 1, g: 1, b: 0.6 } });
+  await SD_applyHighlights(docId, ranges, { color: SD_HL_COLOR });;
 }
 
-// 段落抽取：带出样式（用于识别标题）
+// Paragraph extraction with style (for heading detection)
 function SD_buildParas(doc) {
   const out = [];
   for (const el of (doc?.body?.content || [])) {
@@ -264,9 +260,9 @@ function SD_buildParas(doc) {
   return out;
 }
 
-// 把段落压成“块”喂给 LLM：标题单独成块；正文累计到 minWords 再收束
+// Chunk paragraphs for LLM: headings as single blocks; body accumulates until minWords
 function SD_buildBlocksForLLM(paras, opts = {}) {
-  const minWords = opts.minWords ?? 50;  // 30–60 之间可调
+  const minWords = opts.minWords ?? 50;  // Translated comment omitted (English only).
   const blocks = [];
   let cur = null;
 
@@ -277,7 +273,7 @@ function SD_buildBlocksForLLM(paras, opts = {}) {
     const isHeading = /^HEADING_/i.test(p.style || '');
 
     if (isHeading) {
-      pushCur(); // 先收束上一个
+      pushCur(); // Translated comment omitted (English only).
       blocks.push({
         bid: blocks.length,
         start_pid: i,
@@ -295,7 +291,7 @@ function SD_buildBlocksForLLM(paras, opts = {}) {
       cur.end_pid = i;
     }
     cur.wc += p.wc;
-    // 简单合并关键词（去重取前 8 个）
+    // Translated comment omitted (English only).
     cur.kw = Array.from(new Set([...(cur.kw || []), ...p.kw])).slice(0, 8);
 
     if (cur.wc >= minWords) pushCur();
@@ -305,17 +301,17 @@ function SD_buildBlocksForLLM(paras, opts = {}) {
   return blocks;
 }
 
-// 1) 动态估算块大小：根据全文字数 & 叶子数决定 minWords（60–180 之间）
+// 1) Dynamically estimate block size: based on total word count & leaf count (60–180 words)
 function SD_autoMinWords(paras, leaves, opts = {}) {
   const totalWC = paras.reduce((s, p) => s + (p.wc || 0), 0);
   const L = Math.max(1, leaves.length);
-  // 目标块数 ≈ 1.3×叶子数（可调），并限制上限（避免太碎）
+  // Translated comment omitted (English only).
   const targetBlocks = Math.max(L + 2, Math.round(L * (opts.multiplier ?? 1.3)));
   const mw = Math.round(totalWC / targetBlocks);
-  return Math.max(60, Math.min(180, mw)); // clamp 到 60–180 词
+  return Math.max(60, Math.min(180, mw)); // Translated comment omitted (English only).
 }
 
-// 2) 兜底：如果 LLM 完全不给映射，按块平均切给每个叶子
+// 2) Fallback: if LLM returns nothing, evenly partition blocks to leaves
 function SD_evenPartition(leaves, B) {
   const L = Math.max(1, leaves.length);
   const base = Math.floor(B / L), rem = B % L;
@@ -329,7 +325,7 @@ function SD_evenPartition(leaves, B) {
   return out;
 }
 
-// 3) 覆盖修复：按叶子顺序，连续覆盖 [0..B-1]，无重叠无缺口
+// 3) Coverage repair: enforce continuous coverage [0..B-1] in leaf order, no overlaps or gaps
 function SD_repairCoverage(mapping, leaves, blocks) {
   const B = blocks.length;
   const order = new Map(leaves.map((n, i) => [String(n.id), i]));
@@ -347,18 +343,18 @@ function SD_repairCoverage(mapping, leaves, blocks) {
 
   if (!m.length) return m;
 
-  // 让覆盖从 0 开始，到 B-1 结束，同时保持单调 & 连续
+  // Translated comment omitted (English only).
   m[0].start_bid = 0;
   for (let i = 0, prevEnd = -1; i < m.length; i++) {
     const r = m[i];
-    // 与上一个相接
+    // Translated comment omitted (English only).
     if (r.start_bid <= prevEnd) r.start_bid = prevEnd + 1;
     if (r.start_bid > r.end_bid) r.end_bid = r.start_bid;
-    // 若有缺口，把缺口直接并入上一个
+    // Translated comment omitted (English only).
     if (i > 0 && r.start_bid > prevEnd + 1) m[i - 1].end_bid = r.start_bid - 1;
     prevEnd = r.end_bid;
   }
-  // 最后一段顶到末尾
+  // Translated comment omitted (English only).
   m[m.length - 1].end_bid = B - 1;
   return m;
 }
@@ -366,9 +362,9 @@ function SD_repairCoverage(mapping, leaves, blocks) {
 
 
 
-// 扫描现有树：优先用 lastTree（你生成大纲时的对象），否则退化为 DOM 的 data-parent
+// Scan existing tree: prefer lastTree (from outline build), otherwise fall back to DOM data-parent
 function SD_getTreeModel() {
-  // A) lastTree 结构：{ _id/id, title/name/label, children:[] }
+  // Translated comment omitted (English only).
   if (window.lastTree && typeof window.lastTree === 'object') {
     const map = new Map();
     const dfs = (node, parentId = null, depth = 0) => {
@@ -380,12 +376,12 @@ function SD_getTreeModel() {
       for (const ch of children) dfs(ch, id, depth + 1);
     };
     dfs(window.lastTree, null, 0);
-    // 找 rootId
+    // Translated comment omitted (English only).
     let rootId = String(window.lastTree._id ?? window.lastTree.id);
     return { map, rootId };
   }
 
-  // B) DOM 退化：.node[data-id][data-parent]
+  // Translated comment omitted (English only).
   const els = [...document.querySelectorAll('.node[data-id]')];
   if (!els.length) return null;
 
@@ -404,7 +400,7 @@ function SD_getTreeModel() {
   return { map, rootId };
 }
 
-// 收集叶子节点（无子节点）
+// Collect leaf nodes (no children)
 function SD_getLeafNodes(tree) {
   if (!tree) return [];
   const leaves = [];
@@ -416,7 +412,7 @@ function SD_getLeafNodes(tree) {
   return leaves;
 }
 
-// 合并重叠/贴边区间
+// Merge overlapping or touching ranges
 function SD_unionRanges(ranges) {
   const src = (ranges || []).filter(r => r && r.end > r.start).sort((a, b) => a.start - b.start);
   const out = [];
@@ -428,15 +424,15 @@ function SD_unionRanges(ranges) {
   return out;
 }
 
-// 由叶子区间向上回填：为每个父节点存「并集」(可能是多段)
+// Propagate child ranges upward: store union (may be multi-segment) for each parent
 function SD_buildParentMappings(tree, aiToOrigMap) {
   if (!tree) return;
-  // 预先把叶子的值转成数组形式，父节点也统一写成“数组区间”
+  // Translated comment omitted (English only).
   const asArray = v => (Array.isArray(v) ? v : (v ? [v] : []));
   const rangesOf = (id) => asArray(aiToOrigMap.get(String(id)));
 
-  // 后序遍历：children -> parent
-  // 找所有节点的拓扑序（简单按 depth 排一遍即可）
+  // Translated comment omitted (English only).
+  // Translated comment omitted (English only).
   const nodes = [...tree.map.values()].sort((a, b) => b.depth - a.depth);
   for (const info of nodes) {
     if (info.children && info.children.length) {
@@ -448,10 +444,10 @@ function SD_buildParentMappings(tree, aiToOrigMap) {
 
 
 
-// B) 代理 selectedIds 的 add/delete/clear，自动刷新
+// B) Proxy selectedIds add/delete/clear to auto-refresh
 function SD_installSelectionHooks() {
   const s = window.selectedIds;
-  if (!s || s._sdHooked !== undefined) return;      // 已装过就不重复
+  if (!s || s._sdHooked !== undefined) return;      // Translated comment omitted (English only).
   if (!(s instanceof Set)) { console.warn('[SD] selectedIds 不是 Set'); return; }
 
   const debouncedPaint = SD_debounce(() => {
@@ -473,7 +469,7 @@ function SD_installSelectionHooks() {
 /* ======= selection/highlight wiring ======= */
 
 
-// 树构建完毕后的自动触发（只做映射，不全刷）
+// Auto-trigger after tree build (mapping only, no full repaint)
 const SD_scheduleAutoLLMMap = (() => {
   let t = null, running = false;
   return () => {
@@ -489,28 +485,28 @@ const SD_scheduleAutoLLMMap = (() => {
 })();
 
 
-// 将 LLM 返回的 mapping 调整为互不重叠，按 nodes 顺序切分
+// Make LLM mapping disjoint and ordered by nodes
 function SD_makeDisjoint(mapping, nodes) {
-  // 先按 nodes 顺序重排（mapping 有可能顺序乱）
+  // Translated comment omitted (English only).
   const indexOf = new Map(nodes.map((n, i) => [String(n.id), i]));
   const ordered = mapping
     .filter(m => indexOf.has(String(m.id)))
     .sort((a, b) => indexOf.get(String(a.id)) - indexOf.get(String(b.id)));
 
-  // 单调递增、相邻不重叠（允许贴边），向内收敛
+  // Translated comment omitted (English only).
   let lastEnd = -1;
   for (let i = 0; i < ordered.length; i++) {
     const cur = ordered[i];
     const nxt = ordered[i + 1];
 
-    // 起点不能回头
+    // Translated comment omitted (English only).
     cur.start_pid = Math.max(cur.start_pid, lastEnd + 1);
 
-    // 终点不能越过下一段的起点
+    // Translated comment omitted (English only).
     const nextStart = nxt ? nxt.start_pid : Infinity;
     cur.end_pid = Math.min(cur.end_pid, nextStart - 1);
 
-    // 至少覆盖 1 段
+    // Translated comment omitted (English only).
     if (cur.end_pid < cur.start_pid) cur.end_pid = cur.start_pid;
 
     lastEnd = cur.end_pid;
@@ -519,18 +515,18 @@ function SD_makeDisjoint(mapping, nodes) {
 }
 
 
-// 0) 高亮应用（优先用你已有的 DocsHighlighter；没有就直接调 Docs API）
+// 0) Apply highlights (prefer DocsHighlighter; fallback to direct Docs API)
 async function SD_applyHighlights(docId, ranges, options = {}) {
-  const color = options.color || { r: 1, g: 1, b: 0.6 };
+  const color = options.color || SD_HL_COLOR;
 
-  // 合并 & 过滤
+  // Translated comment omitted (English only).
   const merged = (ranges || [])
     .filter(r => r && r.end > r.start)
     .sort((a, b) => a.start - b.start)
     .reduce((acc, r) => { const L = acc[acc.length - 1]; if (!L || r.start > L.end) acc.push({ ...r }); else L.end = Math.max(L.end, r.end); return acc; }, []);
   if (!merged.length) return;
 
-  // 记录最近一次刷色（供 Clear 用）
+  // Translated comment omitted (English only).
   window.SD_lastPaint = { docId, ranges: merged };
 
   if (typeof DocsHighlighter === 'function') {
@@ -539,7 +535,7 @@ async function SD_applyHighlights(docId, ranges, options = {}) {
     return;
   }
 
-  // fallback 直连 API（不走 highlighter）
+  // Translated comment omitted (English only).
   const rgb = { red: color.r ?? 1, green: color.g ?? 1, blue: color.b ?? 0.6 };
   const requests = merged.map(r => ({
     updateTextStyle: {
@@ -557,17 +553,17 @@ async function SD_applyHighlights(docId, ranges, options = {}) {
 }
 
 
-// 1) Writer 工厂（不依赖 monitor/run；只要有 write 就能工作）
+// 1) Writer factory (no monitor/run dependency; only needs write)
 let _sd_writer = null;
 async function SD_createWriterSafe() {
   if (_sd_writer) return _sd_writer;
   try {
     if (typeof window.createWriterSafe === 'function') {
-      _sd_writer = await window.createWriterSafe();   // 复用你已有的
+      _sd_writer = await window.createWriterSafe();   // Translated comment omitted (English only).
     } else if (typeof Writer?.create === 'function') {
-      _sd_writer = await Writer.create();             // 不传 monitor，最稳
+      _sd_writer = await Writer.create();             // Translated comment omitted (English only).
     } else if (typeof Writer === 'object' && typeof Writer === 'function') {
-      _sd_writer = await Writer();                    // 兜底
+      _sd_writer = await Writer();                    // Translated comment omitted (English only).
     }
   } catch (e) {
     console.warn('[SD] Writer.create failed, will try streaming later', e);
@@ -575,7 +571,7 @@ async function SD_createWriterSafe() {
   return _sd_writer;
 }
 
-// 2) 统一以“纯字符串”调用 Writer；自动兼容 write / write({input}) / streaming
+// 2) Call Writer with plain string; auto-compat with write / write({input}) / streaming
 async function SD_callWriterText(prompt) {
   const writer = await SD_createWriterSafe();
   const pick = r => r?.outputText || r?.text || r?.response || r?.content || (typeof r === 'string' ? r : '');
@@ -595,38 +591,22 @@ async function SD_callWriterText(prompt) {
   throw new Error('[SD] Writer did not accept any known call shape');
 }
 
-// 3) 段落抽取：返回 [{pid,start,end,wc,first12,kw}]
+// 3) Extract keyword tokens helper returns [{pid,start,end,wc,first12,kw}]
 function SD_kwTokens(text, k = 8) {
   const stop = new Set('the a an and or of to in on for with from as is are was were be been being by at it its if than then thus hence this that those these which who whom whose what when where while into over under between among across more most less least very much many few each per such about using use based include includes including'.split(/\s+/));
   const bag = Object.create(null);
   for (const w of (text.toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || [])) if (!stop.has(w)) bag[w] = (bag[w] || 0) + 1;
   return Object.entries(bag).sort((a, b) => b[1] - a[1]).slice(0, k).map(([w]) => w);
 }
-function SD_buildParas(doc) {
-  const out = [];
-  for (const el of (doc?.body?.content || [])) {
-    const p = el.paragraph; if (!p) continue;
-    const s = el.startIndex, e = el.endIndex; if (!(e > s)) continue;
-    const txt = (p.elements || []).map(r => r.textRun?.content || '').join('').replace(/\s+/g, ' ').trim();
-    if (!txt) continue;
-    out.push({
-      pid: out.length, start: s, end: e,
-      wc: txt.split(/\s+/).length,
-      first12: txt.split(/\s+/).slice(0, 12).join(' '),
-      kw: SD_kwTokens(txt)
-    });
-  }
-  return out;
-}
 
 
-// 4) CSV 解析与关键词兜底
+// 4) CSV parsing and keyword-fallback mapping
 function SD_parseCSVToMapping(txt) {
   const arr = [];
   const lines = String(txt || '').split(/\r?\n/);
   for (const line of lines) {
     const L = line.trim();
-    if (!L || /start_pid/i.test(L)) continue; // 跳过表头
+    if (!L || /start_pid/i.test(L)) continue; // Translated comment omitted (English only).
     const m = L.match(/^([^,]+),\s*(\d+),\s*(\d+),\s*(\d*(?:\.\d+)?)/);
     if (!m) continue;
     arr.push({ id: String(m[1]).trim(), start_pid: +m[2], end_pid: +m[3], confidence: +m[4] });
@@ -645,7 +625,7 @@ function SD_fallbackKeywordMapping(nodes, paras) {
   });
 }
 
-// 5) 从画布 DOM 收集节点（优先已选；否则全量）
+// 5) Collect nodes from canvas DOM (prefer selection; otherwise all)
 function SD_nodesFromDOM() {
   const getTitle = id => (document.querySelector(`.node[data-id="${id}"] .title`)?.textContent || '').trim();
   const selected = Array.from(window.selectedIds || new Set());
@@ -655,7 +635,7 @@ function SD_nodesFromDOM() {
   return ids.map(id => ({ id: String(id), title: getTitle(id) })).filter(n => n.title);
 }
 
-// 6) 将映射转为 {start,end} 并合并
+// 6) Convert mapping to {start,end} and merge
 function SD_rangesFromMapping(mapping, paras) {
   const ranges = [];
   for (const m of mapping) {
@@ -669,7 +649,7 @@ async function SD_clearHighlights({ onlySelection = false } = {}) {
   const docId = extractDocId(docInput.value);
   if (!docId) return;
 
-  // 计算要清的 ranges
+  // Compute ranges to clear
   let ranges = [];
   if (onlySelection && window.selectedIds?.size) {
     ranges = Array.from(window.selectedIds)
@@ -679,7 +659,7 @@ async function SD_clearHighlights({ onlySelection = false } = {}) {
     ranges = window.SD_lastPaint.ranges || [];
   }
 
-  // 优先用 highlighter 的 clear（会清掉上次 apply 的整批）
+  // Prefer highlighter.clear (clears the last applied batch)
   if (!onlySelection && typeof window.highlighter?.clear === 'function') {
     await window.highlighter.clear(docId).catch(console.warn);
     window.SD_lastPaint = null;
@@ -688,7 +668,7 @@ async function SD_clearHighlights({ onlySelection = false } = {}) {
 
   if (!ranges.length) { console.log('[SD] no ranges to clear'); return; }
 
-  // 直连 API：把背景色设为 null
+  // Direct API: set backgroundColor to null
   const requests = ranges.map(r => ({
     updateTextStyle: {
       range: { startIndex: r.start, endIndex: r.end },
@@ -910,8 +890,8 @@ function parseMarkdownOutline(md) {
   return root;
 }
 
-// 提取一个 Markdown 片段中的标题线性序列（#..######）
-// 返回 [{ title, level, summary, bullets[] }]
+// Translated comment omitted (English only).
+// Translated comment omitted (English only).
 function extractHeadingsLinear(md) {
   const lines = (md || "").replace(/\r\n?/g, "\n").split("\n");
   const out = [];
@@ -924,18 +904,18 @@ function extractHeadingsLinear(md) {
     const level = h[1].length;
     const title = h[2].trim();
 
-    // 向后扫描到下一个 heading 之前，收集所有 bullet
+    // Translated comment omitted (English only).
     const bullets = [];
     let j = i + 1;
     while (j < lines.length) {
       const s = lines[j];
-      if (/^\s*(#{1,6})\s+/.test(s)) break;             // 下一个标题，停止
+      if (/^\s*(#{1,6})\s+/.test(s)) break;             // Translated comment omitted (English only).
       const m = s.match(/^\s*[-*+]\s+(.*\S)\s*$/);       // bullet
       if (m) bullets.push(m[1].trim());
       j++;
     }
 
-    // 作为回退的单行 summary（优先第一条 bullet，其次第一个非空非标题行）
+    // Translated comment omitted (English only).
     let summary = bullets[0] || "";
     if (!summary) {
       let k = i + 1;
@@ -981,14 +961,14 @@ function renderParentSubtree(centerId) {
 
   const kids = (n) => Array.isArray(n?.children) ? n.children.filter(Boolean) : [];
 
-  // 清画布
+  // Clear canvas
   canvasEl.innerHTML = "";
   if (!treeMap || !treeMap.has(centerId)) { setStatus?.("No node to render."); return; }
 
   const isRootView = (centerId === rootId);
   const center = treeMap.get(centerId);
 
-  // ---------- 构造可见树 ----------
+  // ---------- Build visible tree ----------
   const visibleRoot = { _id: -1, title: "ROOT", children: [] };
   if (isRootView) {
     for (const c of kids(center)) visibleRoot.children.push(c);
@@ -1002,7 +982,7 @@ function renderParentSubtree(centerId) {
       parentVis.children.push(meVis);
       visibleRoot.children.push(parentVis);
     } else {
-      // 兜底：只渲染当前与其子
+      // Fallback: render current node and its children only
       const meVis = { _id: center._id, title: center.title, paras: center.paras || [], children: [] };
       for (const c of kids(center)) meVis.children.push({ _id: c._id, title: c.title, paras: c.paras || [], children: [] });
       visibleRoot.children.push(meVis);
@@ -1012,7 +992,7 @@ function renderParentSubtree(centerId) {
     visibleRoot.children = [{ _id: center._id, title: center.title, paras: center.paras || [], children: [] }];
   }
 
-  // ---------- 布局 ----------
+  // ---------- Layout ----------
   const leafCount = new Map();
   const maxDepth = { v: 0 };
   (function count(node, depth) {
@@ -1057,16 +1037,16 @@ function renderParentSubtree(centerId) {
 
   canvasEl.style.width = canvasW + "px";
   canvasEl.style.height = canvasH + "px";
-  window._pz.apply(); // 保持当前平移/缩放
+  window._pz.apply(); // Translated comment omitted (English only).
 
-  // ---------- SVG 曲线层 ----------
+  // ---------- SVG Curve layer ----------
   const svgNS = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(svgNS, "svg");
   svg.setAttribute("width", canvasW);
   svg.setAttribute("height", canvasH);
   svg.style.position = "absolute";
   svg.style.left = "0"; svg.style.top = "0";
-  svg.style.pointerEvents = "none";   // ★ 让连线层不挡点击
+  svg.style.pointerEvents = "none";   // Make the connector layer not block clicks
   svg.style.zIndex = "1";
   canvasEl.appendChild(svg);
 
@@ -1084,7 +1064,7 @@ function renderParentSubtree(centerId) {
     svg.appendChild(path);
   }
 
-  // Root 视图：从锚点发散
+  // Root view: branch from an anchor
   if (isRootView) {
     const ch = kids(visibleRoot);
     if (ch.length) {
@@ -1111,7 +1091,7 @@ function renderParentSubtree(centerId) {
     }
   })(visibleRoot, 0);
 
-  // ---------- 节点 & Popout ----------
+  // ---------- Nodes & Popout ----------
   let extraMaxX = 0, extraMaxY = 0;
 
   (function renderNodes(node) {
@@ -1126,8 +1106,8 @@ function renderParentSubtree(centerId) {
     el.className = "node";
     el.style.left = p.x + "px";
     el.style.top = p.y + "px";
-    el.style.pointerEvents = "auto";    // ★ 明确可点
-    el.style.zIndex = "2";              // ★ 节点在 SVG 之上
+    el.style.pointerEvents = "auto";    // Translated comment omitted (English only).
+    el.style.zIndex = "2";              // Place nodes above the SVG layer
     el.setAttribute("data-id", n._id);
     if (window.selectedIds?.has(n._id)) el.classList.add("sel");
 
@@ -1141,33 +1121,33 @@ function renderParentSubtree(centerId) {
     let downX = 0, downY = 0, downT = 0, lastTapT = 0;
 
     el.addEventListener("pointerdown", (ev) => {
-      // 仅左键 & 不让画布接管
+      // Translated comment omitted (English only).
       if (ev.button !== 0) return;
       downX = ev.clientX; downY = ev.clientY; downT = ev.timeStamp || Date.now();
     });
 
     el.addEventListener("pointerup", (ev) => {
-      // 拖拽中的一次交互直接忽略
+      // Translated comment omitted (English only).
       if (window._pz?.isDragging) return;
 
       const dx = Math.abs(ev.clientX - downX);
       const dy = Math.abs(ev.clientY - downY);
       const dt = (ev.timeStamp || Date.now()) - downT;
 
-      // 判定为一次“点按”
+      // Translated comment omitted (English only).
       if (dx < 4 && dy < 4 && dt < 300) {
         ev.stopPropagation();
 
-        // 250ms 内第二次点按 → 双击
+        // Translated comment omitted (English only).
         if ((ev.timeStamp || Date.now()) - lastTapT < 250) {
           lastTapT = 0;
-          // 双击 = 聚焦当前
+          // Double-click = focus current node
           window.focusId = n._id;
           renderParentSubtree(window.focusId);
           return;
         }
 
-        // 单击 = 选中 / Ctrl(⌘)+单击 = 互斥多选
+        // Single-click = select / Ctrl(⌘)+click = mutually exclusive multi-select
         if (ev.ctrlKey || ev.metaKey) toggleSelectMutuallyExclusive(n._id, el);
         else selectSingle(n._id, el);
 
@@ -1175,25 +1155,9 @@ function renderParentSubtree(centerId) {
       }
     });
 
-    // // 点击/双击（拖拽后屏蔽）
-    // el.addEventListener("click", (ev) => {
-    //   ev.stopPropagation();
-    //   if (window._pz?.suppressClick || window._pz?.isDragging) return; // 拖拽刚结束屏蔽
-    //   if (ev.ctrlKey || ev.metaKey) toggleSelectMutuallyExclusive(n._id, el);
-    //   else selectSingle(n._id, el);
-    // });
-
-    // // 双击 = 聚焦
-    // el.addEventListener("dblclick", (ev) => {
-    //   ev.stopPropagation();
-    //   if (window._pz?.suppressClick || window._pz?.isDragging) return;
-    //   focusId = n._id;
-    //   renderParentSubtree(focusId);
-    // });
-
     canvasEl.appendChild(el);
 
-    // 聚焦叶子 → Popout
+    // Translated comment omitted (English only).
     const isFocused = (!isRootView && n._id === centerId);
     const hasChildren = !!kids(n).length;
     if (isFocused && !hasChildren && Array.isArray(n.paras) && n.paras.length) {
@@ -1216,7 +1180,7 @@ function renderParentSubtree(centerId) {
     }
   }
 
-  // 若 Popout 扩容则更新画布尺寸
+  // Resize canvas if popout expands
   if (extraMaxX || extraMaxY) {
     canvasW = Math.max(canvasW, extraMaxX + 16);
     canvasH = Math.max(canvasH, extraMaxY + 16);
@@ -1228,18 +1192,18 @@ function renderParentSubtree(centerId) {
   }
 }
 
-/* ===== Global delegate: 命中 .node 就选中 / 双击就聚焦（含强力调试） ===== */
+/* ===== Global delegate: Delegate: click to select / double-click to focus (with verbose logging) ===== */
 (function installNodeDelegate() {
   const log = (...a) => console.log("[DELEGATE]", ...a);
 
   document.addEventListener("pointerup", (e) => {
     if (window._pz?.isDragging) return;
 
-    // 命中元素与 elementFromPoint 对比（更直观）
+    // Translated comment omitted (English only).
     const topEl = document.elementFromPoint(e.clientX, e.clientY);
     const nodeFromPoint = topEl?.closest?.(".node") || null;
 
-    // 允许：canvas / svg / .node 任意命中；其它直接忽略
+    // Allow hits on canvas/svg/.node; ignore others
     const inGraph =
       window.canvasEl &&
       (e.target === window.canvasEl ||
@@ -1336,20 +1300,20 @@ async function onChatSend() {
   const q = (chatInput.value || "").trim();
   if (!q) return;
 
-  // 先追加用户消息并清空输入框
+  // Translated comment omitted (English only).
   appendChat("you", q);
   chatInput.value = "";
 
   try {
     setStatus("Thinking…");
-    // 组共享上下文：文档语言、已生成的 markdown、大纲标题/选中节点等（按需精简）
+    // Translated comment omitted (English only).
     const shared = [
       "You are an assistant for document understanding and editing.",
       lastMarkdown ? "Below is the current AI-restructured outline in Markdown." : "",
       selectedIds?.size ? `Focus nodes: ${[...selectedIds].map(id => treeMap.get(id)?.title).filter(Boolean).join(" | ")}` : ""
     ].filter(Boolean).join("\n");
 
-    // 每次请求创建一个 writer，避免全局未定义
+    // Translated comment omitted (English only).
     const writer = await createWriterSafe({
       format: "plain-text",
       length: "short",
@@ -1487,13 +1451,13 @@ const getTitle = id => (document.querySelector(`.node[data-id="${id}"] .title`)?
 
 /* ===================== Block B — main + auto trigger ===================== */
 
-// 主流程：获取段落 → 叫 LLM 输出 CSV → 解析/兜底 → 高亮
+// Main flow: build paras → call LLM for CSV → parse/fallback → highlight
 async function SD_mapSelectedWithLLM() {
   const raw = docInput?.value?.trim?.() || "";
   const docId = typeof extractDocId === "function" ? extractDocId(raw) : raw;
   if (!window.accessToken || !docId) { console.warn("[SD] no token or docId"); return; }
 
-  // 文档 → 段落 → 块（动态块大小）
+  // Translated comment omitted (English only).
   const doc = await fetchDoc(docId);
   const paras = SD_buildParas(doc);
 
@@ -1501,10 +1465,10 @@ async function SD_mapSelectedWithLLM() {
   const leaves = tree ? SD_getLeafNodes(tree) : SD_nodesFromDOM();
   if (!leaves.length || !paras.length) { console.warn("[SD] no leaves or paras"); return; }
 
-  const minWords = SD_autoMinWords(paras, leaves, { multiplier: 1.3 }); // ← 可调 1.2~1.6
+  const minWords = SD_autoMinWords(paras, leaves, { multiplier: 1.3 }); // adjustable 1.2–1.6
   const blocks = SD_buildBlocksForLLM(paras, { minWords });
 
-  // LLM：只对齐“块 id”（有效范围 0..blocks.length-1）
+  // Translated comment omitted (English only).
   const INSTR = [
     `You are given BLOCKS[0..${blocks.length - 1}] each ~${minWords} words (headings may be single-block).`,
     "Align LEAF nodes to CONTIGUOUS block-id ranges in document order.",
@@ -1521,7 +1485,7 @@ async function SD_mapSelectedWithLLM() {
   const rawText = await SD_callWriterText(prompt);
   console.log("[SD LLM raw] ~~csv\n" + rawText + "\n~~");
 
-  // 解析/兜底
+  // Translated comment omitted (English only).
   let mapping = SD_parseCSVToMapping(rawText)
     .map(m => ({ id: m.id, start_bid: m.start_bid ?? m.start_pid, end_bid: m.end_bid ?? m.end_pid, confidence: m.confidence }));
 
@@ -1529,18 +1493,18 @@ async function SD_mapSelectedWithLLM() {
     mapping = SD_evenPartition(leaves, blocks.length);
   }
 
-  // 叶子间去重叠（先用 makeDisjoint 做初步单调）
+  // Translated comment omitted (English only).
   mapping = SD_makeDisjoint(
     mapping.map(m => ({ id: m.id, start_pid: m.start_bid, end_pid: m.end_bid, confidence: m.confidence })),
     leaves
   ).map(m => ({ id: m.id, start_bid: m.start_pid, end_bid: m.end_pid, confidence: m.confidence }));
 
-  // 覆盖修复：保证覆盖 0..B-1
+  // Translated comment omitted (English only).
   mapping = SD_repairCoverage(mapping, leaves, blocks);
 
   console.table(mapping);
 
-  // 写入 aiToOrigMap：块范围 → 原始 pid → {start,end}
+  // Translated comment omitted (English only).
   if (!window.aiToOrigMap) window.aiToOrigMap = new Map();
   const blockToRange = (bidx) => {
     const b = blocks[bidx]; if (!b) return null;
@@ -1555,10 +1519,10 @@ async function SD_mapSelectedWithLLM() {
     window.aiToOrigMap.set(String(m.id), r);
   }
 
-  // 父节点 = 子区间并集（数组形式）
+  // Translated comment omitted (English only).
   if (tree) SD_buildParentMappings(tree, window.aiToOrigMap);
 
-  // 若已有选中，立即刷新一次
+  // Translated comment omitted (English only).
   if (window.selectedIds?.size) await SD_refreshHighlightsForSelection().catch(() => { });
 }
 
@@ -1674,8 +1638,8 @@ function targetLabel(ids, max = 3) {
 // NOTE: If you already removed Markdown→Docs overwrite/undo utilities earlier, you can keep them removed.
 
 
-// —— 把 Markdown 粗解析成块：heading / ordered / bullet / paragraph ——
-// 并在块中提取 **粗体** / *斜体* 的内联样式范围（去掉标记后保留纯文本 + 样式偏移）
+// Translated comment omitted (English only).
+// Translated comment omitted (English only).
 function parseMarkdownBlocks(md) {
   const lines = (md || "").replace(/\r\n?/g, "\n").split("\n");
   const blocks = [];
@@ -1683,7 +1647,7 @@ function parseMarkdownBlocks(md) {
   while (i < lines.length) {
     const line = lines[i];
 
-    // 代码块（```）直接按普通段落粘贴
+    // Code fences (```) are pasted as plain paragraphs
     if (/^\s*```/.test(line)) {
       i++;
       const buf = [];
@@ -1693,11 +1657,11 @@ function parseMarkdownBlocks(md) {
       continue;
     }
 
-    // 标题
+    // Translated comment omitted (English only).
     const h = line.match(/^\s*(#{1,6})\s+(.*)$/);
     if (h) { blocks.push({ type: "heading", level: h[1].length, ...inlineText(h[2]) }); i++; continue; }
 
-    // 有序列表项
+    // Ordered list items
     const o = line.match(/^\s*\d+\.\s+(.*)$/);
     if (o) {
       const items = [];
@@ -1709,7 +1673,7 @@ function parseMarkdownBlocks(md) {
       continue;
     }
 
-    // 无序列表项
+    // Unordered list items
     if (/^\s*[-*+]\s+/.test(line)) {
       const items = [];
       do {
@@ -1720,10 +1684,10 @@ function parseMarkdownBlocks(md) {
       continue;
     }
 
-    // 空行 -> 段落分隔
+    // Blank line -> paragraph break
     if (/^\s*$/.test(line)) { blocks.push(makePara("")); i++; continue; }
 
-    // 普通段落（可合并多行，直到遇到空行或其它块）
+    // Normal paragraph (merge lines until blank or another block)
     const buf = [line]; i++;
     while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^\s*(#{1,6})\s+/.test(lines[i]) && !/^\s*[-*+]\s+/.test(lines[i]) && !/^\s*\d+\.\s+/.test(lines[i])) {
       buf.push(lines[i++]);
@@ -1734,7 +1698,7 @@ function parseMarkdownBlocks(md) {
 
   function makePara(text) { return { type: "p", ...inlineText(text) }; }
 
-  // 把 **bold** / *italic* 解析为样式片段；返回 {text, spans:[{offset,len,bold,italic}]}
+  // Parse **bold** and *italic* spans; return {text, spans:[{offset,len,bold,italic}]}
   function inlineText(s) {
     let out = "", spans = [];
     let i = 0;
@@ -1757,19 +1721,19 @@ function parseMarkdownBlocks(md) {
           i = j + 1; continue;
         }
       }
-      out += s[i++]; // 普通字符
+      out += s[i++]; // Translated comment omitted (English only).
     }
     return { text: out, spans };
   }
 }
 
-// —— 把 blocks 变成 Google Docs 的 batchUpdate 请求（插入到 startIndex）——
+// —— Convert blocks into Google Docs batchUpdate requests (insert at startIndex)——
 function blocksToRequests(blocks, startIndex) {
   const req = [];
   let cursor = startIndex;
-  const styleOps = [];     // 文本样式（bold/italic）
-  const bulletRanges = []; // 需要 createParagraphBullets 的段落范围
-  const headingRanges = []; // 需要 updateParagraphStyle 的段落范围
+  const styleOps = [];     // Inline text styles (bold/italic)
+  const bulletRanges = []; // Paragraph ranges that need createParagraphBullets
+  const headingRanges = []; // Paragraph ranges for updateParagraphStyle
 
   const pushText = (t) => {
     if (!t) t = "";
@@ -1777,7 +1741,7 @@ function blocksToRequests(blocks, startIndex) {
     cursor += t.length;
   };
 
-  // 把一段应用文本样式（相对段落开始的 spans -> 绝对范围）
+  // Apply inline spans to absolute paragraph ranges
   function styleFromSpans(parStart, spans) {
     for (const sp of spans || []) {
       const absStart = parStart + sp.offset;
@@ -1818,7 +1782,7 @@ function blocksToRequests(blocks, startIndex) {
     }
   }
 
-  // 应用段落样式（标题）
+  // Apply paragraph styles (headings)
   for (const r of headingRanges) {
     const named = `HEADING_${Math.min(6, Math.max(1, r.level))}`;
     req.push({
@@ -1830,7 +1794,7 @@ function blocksToRequests(blocks, startIndex) {
     });
   }
 
-  // 应用项目符号
+  // Apply list bullets
   for (const r of bulletRanges) {
     req.push({
       createParagraphBullets: {
@@ -1840,7 +1804,7 @@ function blocksToRequests(blocks, startIndex) {
     });
   }
 
-  // 应用粗斜体
+  // Apply bold/italic text styles
   for (const s of styleOps) {
     req.push({ updateTextStyle: { range: s.range, textStyle: s.textStyle, fields: s.fields } });
   }
@@ -1849,10 +1813,10 @@ function blocksToRequests(blocks, startIndex) {
   return { requests: req, newLen };
 }
 
-// 归一化（中英通用）：去空白/标点/符号，转小写
+// Normalize: remove spaces/punct/symbols, lowercase (language-agnostic)
 function normKey(s) { return (s || "").toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, ""); }
 
-// 最长公共子序列长度
+// Translated comment omitted (English only).
 function lcsLen(a, b) {
   const m = a.length, n = b.length; const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
   for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++)
@@ -1867,7 +1831,7 @@ function titleSimilar(a, b, thresh = 0.62) {
   return s >= thresh;
 }
 
-// 第1遍：把所有块的标题按相似度聚类，得出每个“标题簇”的规范层级（取最小 level）
+// Pass 1: cluster similar headings to get canonical level per cluster (min level)
 function clusterHeadingsAcrossPieces(mdPieces) {
   const clusters = []; // [{id, repTitle, levelMin, members:[{pieceIdx, idxInPiece, level, title, summary}]}]
   let cid = 0;
@@ -1876,7 +1840,7 @@ function clusterHeadingsAcrossPieces(mdPieces) {
     hs.forEach((h, idxInPiece) => {
       let best = null, bestScore = 0;
       const key = normKey(h.title);
-      // 先精准命中（完全相等）再相似
+      // Translated comment omitted (English only).
       for (const c of clusters) {
         const ck = normKey(c.repTitle);
         const score = lcsLen(key, ck) / Math.max(key.length, ck.length);
@@ -1890,21 +1854,21 @@ function clusterHeadingsAcrossPieces(mdPieces) {
       }
     });
   });
-  // 把成员按原始顺序拍平（pieceIdx, idxInPiece）
+  // Sort members by original order (pieceIdx, idxInPiece)
   clusters.forEach(c => c.members.sort((a, b) => a.pieceIdx === b.pieceIdx ? a.idxInPiece - b.idxInPiece : a.pieceIdx - b.pieceIdx));
   return clusters;
 }
 
 
-// 第2遍：按原始顺序遍历所有标题，将其映射到对应“簇”的规范层级，重建统一层级树
+// Pass 2: traverse in order, map to cluster canonical levels, rebuild unified tree
 function rebuildUnifiedTree(mdPieces, clusters) {
-  // 建立从 (pieceIdx, idxInPiece) -> cluster 的索引
+  // Translated comment omitted (English only).
   const index = new Map();
   for (const c of clusters) {
     for (const m of c.members) index.set(`${m.pieceIdx}:${m.idxInPiece}`, c);
   }
 
-  // 线性拉平所有标题（保留顺序）
+  // Flatten all headings linearly (keep order)
   const seq = [];
   mdPieces.forEach((md, pieceIdx) => {
     const hs = extractHeadingsLinear(md);
@@ -1914,7 +1878,7 @@ function rebuildUnifiedTree(mdPieces, clusters) {
         pieceIdx, idxInPiece,
         title: h.title,
         summary: h.summary,
-        bullets: h.bullets,          // ★ 加上这一行
+        bullets: h.bullets,          // add this line
         canonLevel: c.levelMin,
         clusterId: c.id,
         repTitle: c.repTitle
@@ -1923,9 +1887,9 @@ function rebuildUnifiedTree(mdPieces, clusters) {
   });
 
 
-  // 实际构树：使用“规范层级”作为最终层级；同一 cluster 复用同一个节点
+  // Build tree using canonical level; reuse node for the same cluster
   const root = { title: "ROOT", paras: [], children: [] };
-  const stack = [root]; // stack 长度 = 当前层级（root 视为 0 层）
+  const stack = [root]; // Translated comment omitted (English only).
   const clusterToNode = new Map();
 
   for (const item of seq) {
@@ -1940,7 +1904,7 @@ function rebuildUnifiedTree(mdPieces, clusters) {
       clusterToNode.set(item.clusterId, node);
     }
 
-    // ★ 放入完整 bullets；没有则退回 summary（带规范化去重）
+    // Insert full bullets; fallback to summary with normalization/dedupe
     const norm = s => (s || "").toLowerCase().replace(/\s+/g, " ").trim();
     const seen = new Set((node.paras || []).map(norm));
 
@@ -1954,7 +1918,7 @@ function rebuildUnifiedTree(mdPieces, clusters) {
       if (!seen.has(nb)) node.paras.push(item.summary);
     }
 
-    // 压栈
+    // Translated comment omitted (English only).
     stack[L] = node;
     stack.length = L + 1;
   }
@@ -1962,10 +1926,10 @@ function rebuildUnifiedTree(mdPieces, clusters) {
   return root;
 }
 
-// —— 自动分块（无标题也适用）：按段落累积，带连续上下文 ——
-// maxChars: 每块目标长度；overlap: 上一块末尾拼到本块 context 的字数
+// Auto chunking (no headings required): accumulate by paragraphs with rolling context
+// Translated comment omitted (English only).
 function chunksAuto(fullText, maxChars = 3000, overlap = 400) {
-  // 用空行划分段落
+  // Translated comment omitted (English only).
   const paras = fullText.replace(/\r\n?/g, "\n").split(/\n{2,}/);
   const chunks = [];
   let buf = [], size = 0;
@@ -1980,13 +1944,13 @@ function chunksAuto(fullText, maxChars = 3000, overlap = 400) {
   for (const p of paras) {
     const t = p.trim();
     if (!t) continue;
-    const addLen = (buf.length ? 2 : 0) + t.length; // 两段之间加双换行
+    const addLen = (buf.length ? 2 : 0) + t.length; // Translated comment omitted (English only).
     if (size + addLen > maxChars) push();
     buf.push(t); size += addLen;
   }
   push();
 
-  // 为每块准备“连续上下文”片段，供 writer.write 的 context 使用
+  // Prepare rolling context snippets for writer.write
   const withCtx = chunks.map((text, i) => {
     const prev = i > 0 ? chunks[i - 1] : "";
     const tail = prev ? prev.slice(Math.max(0, prev.length - overlap)) : "";
@@ -2056,29 +2020,29 @@ function normalizeMdPiece(md, rootTitle, isFirstPiece) {
     let text = m[2].trim();
 
     if (level === 1) {
-      // 去掉无意义/元话语 H1
+      // Translated comment omitted (English only).
       if (H1_BLACKLIST.test(text)) continue;
 
       if (isFirstPiece && !h1Placed) {
-        // 首块的唯一 H1 = 全局根标题
+        // Translated comment omitted (English only).
         out.push(`# ${rootTitle}`);
         h1Placed = true;
         continue;
       }
-      // 非首块：如果 H1 与根标题一致 → 丢弃；否则降级为 H2
+      // Translated comment omitted (English only).
       if (text.toLowerCase() === rootTitle.toLowerCase()) continue;
       level = 2;
     }
     out.push(`${"#".repeat(level)} ${text}`);
   }
 
-  // 若首块没放出 H1，则补一个
+  // Translated comment omitted (English only).
   if (isFirstPiece && !h1Placed) out.unshift(`# ${rootTitle}`);
 
   return out.join("\n");
 }
 
-// A) 把整篇文档按「段落」切成可高亮的分段（每段有 startIndex/endIndex + 纯文本）
+// A) Split entire doc into highlightable paragraph sections (startIndex/endIndex + text)
 function buildParagraphSections(docJson) {
   const root = { id: 0, title: "ROOT", level: 0, start: 1, end: null, children: [] };
   let nextId = 1;
@@ -2096,14 +2060,14 @@ function buildParagraphSections(docJson) {
       level: 1,
       start: s,
       end: e,
-      _plain: text,   // 供相似度匹配
+      _plain: text,   // Translated comment omitted (English only).
       children: []
     });
   }
   return { root };
 }
 
-// B) 归一化与简单相似度（LCS 比值）
+// B) Normalization and simple similarity (LCS ratio)
 function _norm(s) { return (s || "").toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, ""); }
 function _lcsLen(a, b) {
   const m = a.length, n = b.length; const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
@@ -2112,16 +2076,16 @@ function _lcsLen(a, b) {
   return dp[m][n];
 }
 
-// C) 通用映射：优先用「原始标题树」，没有标题就用「段落分段」按内容匹配
+// C) Generic mapping: prefer original header tree; otherwise match by paragraph content
 function mapAiTreeToBestSections(aiRoot, docJson, originalSectionsMaybe) {
-  // 有标题就走旧逻辑（标题相似）
+  // With headings: use title-similarity logic
   if (originalSectionsMaybe?.root?.children?.length) {
     return mapAiTreeToOriginal(aiRoot, originalSectionsMaybe.root);
   }
 
-  // 无标题：按段落匹配
+  // Without headings: match by paragraph
   const parSecs = buildParagraphSections(docJson).root.children;
-  const parNorm = parSecs.map(s => ({ s, key: _norm(s._plain).slice(0, 2000) })); // 截断提速
+  const parNorm = parSecs.map(s => ({ s, key: _norm(s._plain).slice(0, 2000) })); // truncate for speed
   const map = new Map();
 
   (function walk(node) {
@@ -2139,7 +2103,7 @@ function mapAiTreeToBestSections(aiRoot, docJson, originalSectionsMaybe) {
         const score = L / Math.max(16, Math.max(key.length, ok.length));
         if (score > bestScore) { best = s; bestScore = score; }
       }
-      // 阈值可调：0.18 较宽容，短文更易命中；太低会误匹配
+      // Threshold tunable: 0.18 is lenient for short docs; too low risks mismatches
       if (best && bestScore >= 0.18) {
         map.set(node._id, { start: best.start, end: best.end, sectionId: best.id, score: bestScore });
       }
@@ -2150,31 +2114,11 @@ function mapAiTreeToBestSections(aiRoot, docJson, originalSectionsMaybe) {
   return map;
 }
 
-function getAncestors(id) {
-  const out = [];
-  let cur = parentMap.get(id);
-  while (cur != null) { out.push(cur); cur = parentMap.get(cur); }
-  return out;
-}
-
-function getDescendants(id) {
-  const out = [];
-  (function walk(x) {
-    const node = treeMap.get(x);
-    if (!node) return;
-    for (const c of node.children || []) {
-      out.push(c._id);
-      walk(c._id);
-    }
-  })(id);
-  return out;
-}
-
 async function onAuthorizeClick() {
-  // 只负责展开/收起输入面板
+  // Only open/close the input panel
   connectPanel.classList.toggle("show");
   if (connectPanel.classList.contains("show")) {
-    // 预填当前 tab 的 docId
+    // Prefill current tab's docId
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       const m = tab?.url?.match(/docs\.google\.com\/document\/d\/([^/]+)/);
@@ -2192,10 +2136,10 @@ async function connectDoc() {
   if (!docId) return setStatus("Invalid docId/URL.");
   try {
     setStatus("Authorizing…");
-    // 真正触发 OAuth
+    // Actually trigger OAuth
     accessToken = await getAccessTokenInteractive();
     setStatus("Connecting…");
-    await fetchDoc(docId);              // 轻量验证可访问
+    await fetchDoc(docId);              // Lightweight access check
     setStatus("Connected ✓");
     connectPanel.classList.remove("show");
   } catch (e) {
