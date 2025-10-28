@@ -24,10 +24,10 @@
     "default_path": "sidepanel.html"
   },
   "trial_tokens": [
-    "A9XuMydaSayAYn31mYqFdBayr+vtPn/njDLsbnstLvbE7lb6ZLlMFEmW4QSgrgu24nrRpejniI82mqLFPBFvcQ4AAACAeyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZmtsbWlnYWFkZWpmZW5qcGdiYWtoa25ra21sZ2ZubG4iLCJmZWF0dXJlIjoiQUlXcml0ZXJBUEkiLCJleHBpcnkiOjE3Njk0NzIwMDAsImlzVGhpcmRQYXJ0eSI6dHJ1ZX0="
+    "YOUR_WRITER_API_ORIGIN_TRIAL_TOKEN"
   ],
   "oauth2": {
-    "client_id": "899807374293-4kh94bijc2jctsq90sdqj2nk9o92o2kh.apps.googleusercontent.com",
+    "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/documents",
       "https://www.googleapis.com/auth/drive.readonly"
