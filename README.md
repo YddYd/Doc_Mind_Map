@@ -1,5 +1,4 @@
 # DocMind Map — Outline ↔ Text Highlighter for Google Docs
-**(formerly “StructDoc”)**
 
 > Map your outline/mind map to source paragraphs **inside Google Docs** with live highlighting. Leaf nodes align one-to-one with text blocks; parents auto-aggregate children. Works with Chrome’s on-device Writer/Summarizer.  
 
@@ -160,7 +159,6 @@ await highlighter.clear(docId); // or direct Docs API: backgroundColor=null
 ---
 
 # （中文）DocMind Map — Google Docs 大纲↔文本高亮映射
-**（原名 “StructDoc”）**
 
 > 在 Google Docs 侧栏生成 **AI 大纲/思维导图**，将 **叶子节点**与原文 **一一对齐并高亮**；**父节点**自动聚合子节点区间。支持本地 Writer/Summarizer，隐私友好。
 
