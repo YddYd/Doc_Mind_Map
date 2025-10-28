@@ -61,14 +61,11 @@
 
 **本地测试**
 
-1. 在地址栏打开：`chrome://flags/#writer-api-for-gemini-nano`  
-2. 将 **“Writer API for Gemini Nano”** 设为 **Enabled**，重启浏览器。
-
-**生产环境**
-
-1. 前往 **Chrome Origin Trials** 注册 **Writer API** 的试用令牌。
-2. 在web origin中填入 "chrome-extension://<拓展ID>"
-3. 将获得的 token 填入 `manifest.json`：  
+1. 在地址栏打开：`chrome://flags/
+2. 将 **“Writer API for Gemini Nano”** 与 **"Summarization API for Gemini Nano"** 设为 **Enabled**，重启浏览器。
+3. 前往 **Chrome Origin Trials** 注册 **Writer API** 的试用令牌。
+4. 在web origin中填入 "chrome-extension://<拓展ID>"
+5. 将获得的 token 填入 `manifest.json`：  
    ```json
    "trial_tokens": [
      "YOUR_WRITER_API_ORIGIN_TRIAL_TOKEN"
