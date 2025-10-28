@@ -38,7 +38,7 @@
 ### 2️⃣ 创建 OAuth 凭据（Web 应用类型）
 
 1. 在 **“API 与服务 → 凭据”** 中创建 **OAuth 2.0 Client ID**，类型选择：**Web Application**。  
-2. 在该客户端中添加以下 **Authorized redirect URI**（将 `<扩展ID>` 替换为你的扩展 ID）：  
+2. 在该客户端中添加以下 **Authorized redirect URI**（将 `<扩展ID>` 替换为你的扩展 ID，可在chrome://extensions/中查看）：  
    ```
    https://<扩展ID>.chromiumapp.org/
    ```
@@ -59,15 +59,16 @@
 
 ### 3️⃣ 启用 Chrome Built‑in AI（Writer API）
 
-**方式 A：本地测试（开发阶段推荐）**
+**本地测试**
 
 1. 在地址栏打开：`chrome://flags/#writer-api-for-gemini-nano`  
 2. 将 **“Writer API for Gemini Nano”** 设为 **Enabled**，重启浏览器。
 
-**方式 B：生产环境（发布扩展推荐）**
+**生产环境**
 
-1. 前往 **Chrome Origin Trials** 注册 **Writer API** 的试用令牌。  
-2. 将获得的 token 填入 `manifest.json`：  
+1. 前往 **Chrome Origin Trials** 注册 **Writer API** 的试用令牌。
+2. 在web origin中填入 "chrome-extension://<拓展ID>"
+3. 将获得的 token 填入 `manifest.json`：  
    ```json
    "trial_tokens": [
      "YOUR_WRITER_API_ORIGIN_TRIAL_TOKEN"
