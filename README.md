@@ -69,19 +69,13 @@ $$\bigcup_k [s_k, e_k] = [0,B-1],\quad s_k \le e_k \text{ and sorted by leaf ord
 > Needed so a Chrome extension origin can call the Built‑in AI APIs.
 
 1. Open the **Chrome Origin Trials** dashboard and create tokens for your **extension origin** `chrome-extension://<EXTENSION_ID>`.
-   - Features to enroll: **AIWriterAPI** and **AISummarizerAPI** (if available in your channel).
+   - Features to enroll: **AIWriterAPI**.
    - Use the same **EXTENSION_ID** as the one shown in `chrome://extensions`.
 2. Copy the issued tokens and add them to your `manifest.json`:
    ```json
-   {
-     "manifest_version": 3,
-     "name": "DocMind Map",
-     "version": "1.0.0",
      "trial_tokens": [
        "<YOUR_AIWRITERAPI_TOKEN>",
-       "<YOUR_AISUMMARIZERAPI_TOKEN>"
      ]
-   }
    ```
 3. Reload the extension. In Console, the following should **not** throw and should log availability:
    ```js
@@ -218,19 +212,14 @@ id,start_bid,end_bid,confidence
 > 让 **Chrome 扩展的 origin** 可以调用 Built‑in AI API。
 
 1. 进入 **Chrome Origin Trials** 后台，为你的 **扩展 ID** `chrome-extension://<EXTENSION_ID>` 申请令牌：  
-   - 需要的 Feature：**AIWriterAPI**、（可选）**AISummarizerAPI**（取决于通道是否开放）  
+   - 需要的 Feature：**AIWriterAPI**  
    - EXTENSION_ID 与 `chrome://extensions` 中显示的一致  
 2. 将签发的令牌写入 `manifest.json`：
    ```json
-   {
-     "manifest_version": 3,
-     "name": "DocMind Map",
-     "version": "1.0.0",
      "trial_tokens": [
        "<YOUR_AIWRITERAPI_TOKEN>",
        "<YOUR_AISUMMARIZERAPI_TOKEN>"
      ]
-   }
    ```
 3. 重新加载扩展；在 Console 检查：
    ```js
